@@ -50,7 +50,7 @@ def main():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            config = json.loads(os.environ['CLIENT_SECRETS']) if 'CLIENT_SECRETS' in os.environ else json.load('credentials.json')
+            config = json.loads(os.environ['CLIENT_SECRETS']) if 'CLIENT_SECRETS' in os.environ else json.load(open('credentials.json', 'r'))
             flow = InstalledAppFlow.from_client_config(config, scopes=Config.SCOPES)
             creds = flow.run_local_server()
         with open('token.pickle', 'wb') as token:
