@@ -1,5 +1,5 @@
 # Google Spreadsheet Picture Generator
-import pickle
+import pickle, json
 from PIL import Image, ImageFont, ImageDraw
 import os.path
 from googleapiclient.discovery import build
@@ -50,9 +50,8 @@ def main():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', Config.SCOPES
-            )
+            config = json.loads(os.environ['CLIENT_SECRETS']) if 'CLIENT_SECRETS' in os.environ else json.load('credentials.json')
+            flow = InstalledAppFlow.from_client_config(config, scopes=Config.SCOPES)
             creds = flow.run_local_server()
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
@@ -75,9 +74,8 @@ def main():
     else:
         print('Dumping confessions')
         i = 0
-        if os.path.exists('.uploadProgress'):
-            with open('.uploadProgress', 'r') as file:
-                resume = int(file.readline())
+        if 'UPLOAD_PROGRESS' in os.environ:
+            resume = int(os.environ['UPLOAD_PROGRESS'])
         else:
             resume = 0
         for row in values:
@@ -101,8 +99,7 @@ def main():
                 media = MediaFileUpload(filename, mimetype='image/png', resumable=True)
                 file = drive_service.files().create(body=metadata, media_body=media, fields='id').execute()
                 print('Successfully uploaded: ID {}'.format(file.get('id')))
-                with open('.uploadProgress', 'w') as file:
-                    file.write(str(i))
+                os.environ['UPLOAD_PROGRESS'] = str(i)
 
 if __name__ == '__main__':
     main()
